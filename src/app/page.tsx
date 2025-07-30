@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, Suspense } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ChangeEvent, FormEvent } from "react";
@@ -26,7 +26,7 @@ interface ThemeConfig {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VERIFICATION_CODE_REGEX = /^\d{6}$/;
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -37,7 +37,7 @@ export default function LoginPage() {
   const [isEmailWritten, setIsEmailWritten] = useState(false);
   const [isCodeWritten, setIsCodeWritten] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentStep = searchParams.get("authStep") || "enter-email";
@@ -104,7 +104,7 @@ export default function LoginPage() {
         router.push(
           `?authStep=verify-email&email=${encodeURIComponent(email.trim())}`
         );
-      } catch (error) {
+      } catch {
         setErrors({ email: "Произошла ошибка. Попробуйте еще раз." });
       } finally {
         setIsSubmitting(false);
@@ -146,7 +146,7 @@ export default function LoginPage() {
     // Save theme preference to localStorage
     try {
       localStorage.setItem("theme", (!isDarkMode).toString());
-    } catch (error) {
+    } catch  {
       console.warn("Failed to save theme preference");
     }
   }, [isDarkMode]);
@@ -171,7 +171,7 @@ export default function LoginPage() {
       if (savedTheme !== null) {
         setIsDarkMode(savedTheme === "true");
       }
-    } catch (error) {
+    } catch {
       console.warn("Failed to load theme preference");
     }
   });
@@ -194,7 +194,7 @@ export default function LoginPage() {
         {children}
       </motion.div>
     ),
-    [isDarkMode, themeConfig]
+    [themeConfig]
   );
 
   // Common card component
@@ -542,7 +542,7 @@ export default function LoginPage() {
                 console.log("Verifying code:", verificationCode);
                 // For demo purposes, just show success
                 alert("Код подтвержден! Регистрация завершена.");
-              } catch (error) {
+              } catch {
                 setErrors({
                   verificationCode: "Неверный код. Попробуйте еще раз.",
                 });
@@ -627,5 +627,13 @@ export default function LoginPage() {
         </div>
       </Card>
     </AnimatedBackground>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
